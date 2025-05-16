@@ -1,0 +1,87 @@
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017  # Expose port 27018 on the host to access the container's MongoDB service on port 27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=11111111
+    networks:
+      - dockernet
+    volumes:
+      - mongo-db:/data/db
+
+  mongo-express:
+    image: mongo-express
+    ports:
+      - 8080:8080  # Expose port 8080 on the host for the mongo-express web interface
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=11111111
+      - ME_CONFIG_MONGODB_SERVER=mongo  # The name of the MongoDB service defined in docker-compose
+    networks:
+      - dockernet
+    depends_on:
+      - mongo
+
+  postgres: 
+    image: postgres:17.5-alpine3.21
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=1111
+      - POSTGRES_DB=postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    networks:
+      - dockernet
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_PASSWORD=1111
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+    ports:
+     - 5040:80
+    networks:
+    - dockernet
+  redis:
+    image: redis/redis-stack:latest
+    ports: 
+      - 6379:6379
+      - 8001:8001
+    volumes:
+      - redis-db:/var/lib/redis-stack
+    networks:
+      - dockernet
+    environment:
+      - REDIS_ARGS=save 900 1
+
+  rabbitmq:
+    image: rabbitmq:3.8-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmq-db:/var/lib/rabbitmq
+    networks:
+      - dockernet
+    
+  dockerapp:
+    build: .
+    ports: 
+      - 5050:5050
+    depends_on: 
+      - mongo
+  
+
+networks:
+  dockernet:
+    driver: bridge
+
+volumes:
+  mongo-db:
+  postgres-db:
+  redis-db:
+  rabbitmq-db:
